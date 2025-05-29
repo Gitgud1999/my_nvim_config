@@ -1,0 +1,1 @@
+This is my neovim config file. which i have followed the Typecarfts  Neovim plugin tutorial. It have finetuned with additional plugins and addtional coding language support like python and C++, with rust.
