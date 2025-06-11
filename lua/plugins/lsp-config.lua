@@ -1,43 +1,24 @@
 return {
   {
-    "williamboman/mason.nvim",
-    lazy = false,
-    config = function()
-      require("mason").setup()
-    end,
-  },
-  {
-    "williamboman/mason-lspconfig.nvim",
-    lazy = false,
-    dependencies = { "williamboman/mason.nvim" },
-    opts = {
-      ensure_installed = {
-        "ts_ls",
-        "solargraph", 
-        "html",
-        "lua_ls",
-        "clangd",       -- C/C++
-        "pyright",      -- Python
-        "rust_analyzer", -- Rust (systems/embedded)
-        "verilog_ls",   -- Verilog/SystemVerilog
-        "svls",         -- SystemVerilog
-        "julials",      -- Julia (scientific computing)
-        "r_language_server", -- R (data analysis)
-        "bashls",       -- Bash scripting
-        "yamlls",       -- YAML configs
-        "jsonls",       -- JSON configs
-      },
-      auto_install = true,
-    },
-  },
-  {
     "neovim/nvim-lspconfig",
     lazy = false,
-    dependencies = { 
+    dependencies = {
       "williamboman/mason.nvim",
       "williamboman/mason-lspconfig.nvim",
+      "hrsh7th/cmp-nvim-lsp",
     },
     config = function()
+      -- Setup Mason first
+      require("mason").setup({
+        ui = {
+          icons = {
+            package_installed = "✓",
+            package_pending = "➜",
+            package_uninstalled = "✗"
+          }
+        }
+      })
+      
       local lspconfig = require("lspconfig")
       local capabilities = require("cmp_nvim_lsp").default_capabilities()
       
@@ -53,76 +34,38 @@ return {
         map("n", "<leader>fm", function() vim.lsp.buf.format({ async = true }) end, "Format File")
       end
       
-      -- Manual server configuration
-      lspconfig.ts_ls.setup({
-        capabilities = capabilities,
-        on_attach = on_attach,
+      -- Setup mason-lspconfig for automatic server installation
+      local servers = {
+        "ts_ls",
+        "solargraph", 
+        "html",
+        "lua_ls",
+        "clangd",
+        "pyright",
+        "rust_analyzer",
+        "julials",
+        "bashls",
+        "yamlls",
+        "jsonls",
+        "fortls",  -- Fortran language server
+      }
+      
+      require("mason-lspconfig").setup({
+        ensure_installed = servers,
+        automatic_installation = true,
       })
       
-      lspconfig.solargraph.setup({
-        capabilities = capabilities,
-        on_attach = on_attach,
-      })
-      
-      lspconfig.html.setup({
-        capabilities = capabilities,
-        on_attach = on_attach,
-      })
-      
-      lspconfig.lua_ls.setup({
-        capabilities = capabilities,
-        on_attach = on_attach,
-      })
-      
-      lspconfig.clangd.setup({
-        capabilities = capabilities,
-        on_attach = on_attach,
-      })
-      
-      lspconfig.pyright.setup({
-        capabilities = capabilities,
-        on_attach = on_attach,
-      })
-      
-      lspconfig.rust_analyzer.setup({
-        capabilities = capabilities,
-        on_attach = on_attach,
-      })
-      
-      lspconfig.verilog_ls.setup({
-        capabilities = capabilities,
-        on_attach = on_attach,
-      })
-      
-      lspconfig.svls.setup({
-        capabilities = capabilities,
-        on_attach = on_attach,
-      })
-      
-      lspconfig.julials.setup({
-        capabilities = capabilities,
-        on_attach = on_attach,
-      })
-      
-      lspconfig.r_language_server.setup({
-        capabilities = capabilities,
-        on_attach = on_attach,
-      })
-      
-      lspconfig.bashls.setup({
-        capabilities = capabilities,
-        on_attach = on_attach,
-      })
-      
-      lspconfig.yamlls.setup({
-        capabilities = capabilities,
-        on_attach = on_attach,
-      })
-      
-      lspconfig.jsonls.setup({
-        capabilities = capabilities,
-        on_attach = on_attach,
-      })
+      -- Setup each server
+      for _, server in ipairs(servers) do
+        if lspconfig[server] and lspconfig[server].setup then
+          lspconfig[server].setup({
+            capabilities = capabilities,
+            on_attach = on_attach,
+          })
+        else
+          vim.notify("LSP server '" .. server .. "' is not available in lspconfig", vim.log.levels.WARN)
+        end
+      end
     end,
   },
 }
